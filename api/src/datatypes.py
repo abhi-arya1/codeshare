@@ -8,6 +8,7 @@ class WebsocketDataType(Enum):
     INIT="init"
     COMMON_CODE="commonCode"
     SUBMISSION_SWITCH="teacherSwitchSubmit"
+    PING="ping"
 
 
 class ClassesDict(BaseModel):

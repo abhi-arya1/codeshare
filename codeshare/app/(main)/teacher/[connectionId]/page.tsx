@@ -85,7 +85,7 @@ export default function TeacherHome() {
 
   return (
     <div className="h-screen w-full">
-      <ResizablePanelGroup direction="horizontal" className="max-h-screen overflow-hidden">
+      <ResizablePanelGroup direction="horizontal" className="max-h-screen overflow-clip">
         {/* Left panel - Code Editor */}
         <ResizablePanel defaultSize={50} minSize={40}>
           <div className="flex flex-col gap-y-2 p-4">
@@ -102,19 +102,11 @@ export default function TeacherHome() {
             }
             {
               submissionState === "enabled" ? (
-                <span className="text-green-600 dark:text-green-400 text-sm ">Submissions Enabled</span>
-              ) : (
-                <span className="text-red-400 text-sm">Submissions Disabled</span>
-              )
-            }
-            {/* <span className="text-muted-foreground text-sm">Connected Students: {numStudents}</span> */}
-            {
-              submissionState === "enabled" ? (
                 <Button variant="destructive" className="flex flex-row gap-x-2" onClick={handleSwapSubmitState}>
                   Disable Submissions <X className="h-4 w-4" />
                 </Button>
               ) : (
-                <Button variant="secondary" className="flex flex-row gap-x-2" onClick={handleSwapSubmitState}>
+                <Button className="flex flex-row gap-x-2" onClick={handleSwapSubmitState}>
                   Enable Submissions <Send className="h-4 w-4" />
                 </Button>
               )
