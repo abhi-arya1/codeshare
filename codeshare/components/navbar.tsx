@@ -26,7 +26,11 @@ const Navbar = () => {
             <div
                 className="flex flex-row text-muted-foreground hover:text-foreground transition-all gap-x-2 items-center cursor-pointer"
                 role="button"
-                onClick={() => router.push("/")}
+                onClick={() => {
+                    localStorage.removeItem("student_class_id");
+                    localStorage.removeItem("teacher_class_id");
+                    router.push("/");
+                }}
             >
                 <ArrowLeft className="h-4 w-4" />
                 {

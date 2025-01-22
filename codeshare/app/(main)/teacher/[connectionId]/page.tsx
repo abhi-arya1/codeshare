@@ -5,10 +5,11 @@ import MonacoEditor from "@/components/monaco";
 import SubmissionItem from "@/components/submission-item";
 import { Button } from "@/components/ui/button";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { Textarea } from "@/components/ui/textarea";
 import { Submission } from "@/lib/dtypes";
 import { generateShortUUID } from "@/lib/helpers";
 import { cn } from "@/lib/utils";
-import { Send } from "lucide-react";
+import { Send, X } from "lucide-react";
 import { useState } from "react";
 
 export default function TeacherHome() {
@@ -51,8 +52,10 @@ export default function TeacherHome() {
             />
           </div>
           <div className="flex flex-row justify-end items-center gap-x-2 p-4">
-            <Button variant="secondary" className="flex flex-row gap-x-2">
-              Submit <Send className="h-4 w-4" />
+            <span className="text-muted-foreground text-sm pr-3 border-r-2 border-white">Submissions Enabled</span>
+            <span className="text-muted-foreground text-sm">Connected Students: 0</span>
+            <Button variant="destructive" className="flex flex-row gap-x-2">
+              Disable Submissions <X className="h-4 w-4" />
             </Button>
           </div>
         </ResizablePanel>
@@ -62,8 +65,11 @@ export default function TeacherHome() {
         {/* Right panel - Description and Submissions */}
         <ResizablePanel defaultSize={50} minSize={25}>
           <div className="h-full p-4 flex flex-col gap-4">
-            <div className={cn("bg-muted rounded-lg p-4 break-words whitespace-break-spaces", !description && "text-muted-foreground italic")}>
-              {description ? description : "Awaiting problem..."}
+            <div className={cn("bg-muted rounded-lg p-4 break-words whitespace-break-spaces flex items-start flex-row gap-x-2", !description && "text-muted-foreground italic")}>
+              <Textarea className="border-2 border-muted-foreground max-h-[250px]" placeholder="(Markdown supported) Provide problem details here..." />
+              <button className="rounded-lg transition-colors dark:text-white text-black hover:bg-muted-foreground/40 bg-muted-foreground/20 p-2">
+                <Send className="h-4 w-4" />
+              </button>
             </div>
             <div className="flex flex-col gap-2 overflow-y-auto">
               {submissions.map((sub, idx) => (

@@ -5,6 +5,12 @@ type Submission = {
     submittedAt?: string;
 }
 
+type CreateClassReturn = {
+    success: boolean;
+    class_id: string;
+}
+
 export type {
-    Submission
+    Submission,
+    CreateClassReturn
 }
