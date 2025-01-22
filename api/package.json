@@ -1,0 +1,11 @@
+{
+    "name": "codeshare_api",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+      "dev": "source venv/bin/activate; python run.py",
+      "build": "source venv/bin/activate; python run.py",
+      "start": "source venv/bin/activate; python run.py"
+    }
+  }
+  
