@@ -12,6 +12,7 @@ import { MessageSquareX, Send, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import webSocketService from "@/lib/ws_manager";
 import { usePathname, useRouter } from "next/navigation";
+import { closeClass } from "@/lib/api";
 
 export default function TeacherHome() {
   const pathname = usePathname();
@@ -23,6 +24,20 @@ export default function TeacherHome() {
   const [error, setError] = useState<string>("");
   const [code, setCode] = useState<string>("");
   const [submissionState, setSubmissionState] = useState<"enabled" | "disabled">("enabled");
+
+  useEffect(() => {
+    const handleBeforeUnload = async (e: BeforeUnloadEvent) => {
+      await closeClass(classCode);
+      localStorage.removeItem("teacher_pw");
+      router.push("/");
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
 
   useEffect(() => {
     const teacherPw = localStorage.getItem("teacher_pw");
