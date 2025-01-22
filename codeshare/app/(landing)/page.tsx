@@ -1,9 +1,11 @@
 "use client";
 
 import { ModeToggle } from "@/components/mode-toggle";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { generateShortUUID } from "@/lib/helpers";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -19,6 +21,17 @@ const Landing = () => {
         }
 
         return router.push("/class/" + classCode);
+    }
+
+    const [password, setPassword] = useState<string>("");
+
+    const handleClassCreate = () => {
+        if(password === "" || !password) {
+            setError("Please enter a password to continue");
+            return;
+        }
+
+        return router.push(`/teacher/${generateShortUUID()}`);
     }
 
     return (
@@ -45,10 +58,65 @@ const Landing = () => {
                             Join
                         </Button>
                     </div>
-                    <span className="text-muted-foreground text-xs">or</span>
-                    <Button className="w-full" variant="secondary">
-                        I'm an Instructor
-                    </Button>
+                    <span className="text-muted-foreground text-xs">or, for instructors</span>
+                    {/* () => router.push(`/teacher/${generateShortUUID()}`) */}
+                    <AlertDialog>
+                        <AlertDialogTrigger className="w-full">
+                            <Button className="w-full" variant="secondary" onClick={() => {}}>
+                                Create New Class
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogTitle className="font-base">
+                                Set a Teacher Password
+                            </AlertDialogTitle>
+                            <Input placeholder="Enter a password" type="password" 
+                                onChange={(e) => setPassword(e.target.value.trim())}
+                                onKeyDown={(event) => {
+                                    if(event.key === "Enter") {
+                                        handleClassCreate();
+                                    }
+                                }}
+                            />
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>
+                                    Close
+                                </AlertDialogCancel>
+                                <AlertDialogAction onClick={handleClassCreate}>
+                                    Submit
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+
+                    <AlertDialog>
+                        <AlertDialogTrigger className="w-full">
+                            <Button className="w-full" variant="secondary" onClick={() => {}}>
+                                Restore Class
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogTitle className="font-base">
+                                Enter Your Class Password
+                            </AlertDialogTitle>
+                            <Input placeholder="Enter a password" type="password" 
+                                onChange={(e) => setPassword(e.target.value.trim())}
+                                onKeyDown={(event) => {
+                                    if(event.key === "Enter") {
+                                        handleClassCreate();
+                                    }
+                                }}
+                            />
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>
+                                    Close
+                                </AlertDialogCancel>
+                                <AlertDialogAction onClick={handleClassCreate}>
+                                    Submit
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </CardContent>
             </Card>
             <span className="text-destructive text-xs my-2">{error}</span>

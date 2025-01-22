@@ -6,11 +6,14 @@ import SubmissionItem from "@/components/submission-item";
 import { Button } from "@/components/ui/button";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Submission } from "@/lib/dtypes";
+import { generateShortUUID } from "@/lib/helpers";
 import { cn } from "@/lib/utils";
 import { Send } from "lucide-react";
 import { useState } from "react";
 
-export default function Home() {
+export default function TeacherHome() {
+  const classCode = generateShortUUID();
+
   const [description, setDescription] = useState<string>("");
   const [submissions, setSubmissions] = useState<Submission[]>([
     {

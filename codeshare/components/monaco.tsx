@@ -22,7 +22,7 @@ const MonacoEditor = ({
 
     return ( <div>
         <Editor
-            height="70vh"
+            height="83vh"
             defaultLanguage="cpp"
             language={language}
             theme={theme === "dark" ? monacoThemeMap.dark : monacoThemeMap.light}
