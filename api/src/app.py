@@ -91,6 +91,7 @@ async def close_class(data: dict):
 @app.websocket("/ws/connect")
 async def ws_connect(ws: WebSocket):
     await app.ws_manager.connect(ws)
+    print("Connected a new WebSocket")
     try: 
         while True: 
             data = await ws.receive_json()
