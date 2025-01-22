@@ -7,6 +7,7 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { createClass, reconnectToClass } from "@/lib/api";
 import { generateShortUUID } from "@/lib/helpers";
+import { GithubIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -59,7 +60,14 @@ const Landing = () => {
 
     return (
         <div className="h-screen w-full flex flex-col items-center justify-center">
-            <div className="absolute top-3 right-4">
+            <div className="absolute top-3 right-4 flex items-center flex-row gap-x-2">
+                <Button className="dark:bg-[#1a1a1a] dark:text-white" variant="outline" size="icon"
+                    onClick={() => window.open("https://github.com/abhi-arya1/codeshare", "_blank")}
+                >
+                    <img src="/ghd.png" className="h-[1.2rem] w-[1.2rem] block dark:hidden rotate-0 scale-100" />
+                    <img src="/ghl.png" className="h-[1.2rem] w-[1.2rem] hidden dark:block rotate-0 scale-100" />
+                    <span className="sr-only">Github URL</span>
+                </Button>
                 <ModeToggle />
             </div>
             <Card className="py-2 px-3 flex flex-col items-center gap-y-3">
