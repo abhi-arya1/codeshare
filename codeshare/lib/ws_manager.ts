@@ -1,4 +1,3 @@
-const WS_URL = "ws://localhost:8080";
 
 export class WebSocketService {
   private socket: WebSocket | undefined;
@@ -89,5 +88,6 @@ export class WebSocketService {
   }
 }
 
-const webSocketService = new WebSocketService(`${WS_URL}/ws/connect`);
+const webSocketService = new WebSocketService(`${process.env.NEXT_PUBLIC_API_URL_WS! 
+  || "ws://localhost:8080"}/ws/connect`);
 export default webSocketService;
