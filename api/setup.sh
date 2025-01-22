@@ -1,8 +1,8 @@
 #!/bin/bash
 
-sudo apt-get -y update && apt-get -y upgrade
+sudo apt-get -y update && sudo apt-get -y upgrade
 sudo apt-get install certbot python3-certbot-nginx
-sudo apt install -y python3-dev python3.12-venv python3.12-pip gcc nginx openssl podman-docker
+sudo apt install -y python3-dev python3-venv python3-pip gcc nginx openssl podman-docker
 
 # docker pull docker.io/python:latest
 # docker pull docker.io/gcc:latest 
