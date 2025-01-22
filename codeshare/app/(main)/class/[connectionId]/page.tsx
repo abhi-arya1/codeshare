@@ -9,6 +9,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import { Submission, WebSocketRecieve } from "@/lib/dtypes";
 import { cn } from "@/lib/utils";
 import webSocketService from "@/lib/ws_manager";
+import { useMediaQuery } from "usehooks-ts";
 import { Send } from "lucide-react";
 import Head from "next/head";
 import { usePathname, useRouter } from "next/navigation";
@@ -26,6 +27,7 @@ export default function Home() {
   const [submissionState, setSubmissionState] = useState<"enabled" | "disabled">("enabled")
   const [code, setCode] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   useEffect(() => {
     webSocketService.sendMessage("init", classId, {})
@@ -64,7 +66,7 @@ export default function Home() {
 
   return (
     <div className="h-screen w-full">
-      <ResizablePanelGroup direction="horizontal" className="max-h-screen overflow-clip">
+      <ResizablePanelGroup direction={isMobile ? "vertical" : "horizontal"} className="max-h-screen overflow-clip">
         {/* Left panel - Code Editor */}
         <ResizablePanel defaultSize={50} minSize={40}>
           <div className="flex flex-col gap-y-2 p-4">
