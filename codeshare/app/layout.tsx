@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CodeShare",
+  title: "Codeshare",
   description: "Learn Code Collaboratively in the Classroom",
 };
 
