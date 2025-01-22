@@ -1,11 +1,13 @@
 import { Editor } from "@monaco-editor/react";
 import { useTheme } from "next-themes";
+import { SYSTEM_ENTRYPOINTS } from "next/dist/shared/lib/constants";
 
 
 interface EditorProps {
     language: string; 
     code: string;
     onCodeChange: (code: string) => void;
+    readOnly: boolean;
 }
 
 const monacoThemeMap = {
@@ -17,19 +19,20 @@ const MonacoEditor = ({
     language,
     code,
     onCodeChange,
+    readOnly
 }: EditorProps) => {
-    const { theme } = useTheme();
+    const { theme, systemTheme } = useTheme();
 
     return ( <div>
         <Editor
             height="83vh"
             defaultLanguage="cpp"
             language={language}
-            theme={theme === "dark" ? monacoThemeMap.dark : monacoThemeMap.light}
+            theme={(theme === "dark" || systemTheme === "dark") && theme !== "light" ? monacoThemeMap.dark : monacoThemeMap.light}
             value={code}
             onChange={(value, _) => onCodeChange(value || "")}
             options={{
-                readOnly: false,
+                readOnly: readOnly,
                 fontSize: 16,
                 suggestOnTriggerCharacters: true,
                 acceptSuggestionOnEnter: 'on',

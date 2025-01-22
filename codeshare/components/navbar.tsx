@@ -6,6 +6,7 @@ import { ArrowLeft, CircleCheck } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { ModeToggle } from "./mode-toggle";
 import { useState } from "react";
+import { closeClass } from "@/lib/api";
 
 
 const Navbar = () => {
@@ -20,15 +21,22 @@ const Navbar = () => {
         setTimeout(() => setCopied(false), 2000);
     };
 
+    const handleCloseClass = async () => {
+        await closeClass(classCode);
+        localStorage.removeItem("teacher_pw");
+        router.push("/");
+    }
+
     return (
         <nav className="top-0 w-screen p-1 px-3 grid grid-cols-3 items-center border-b-2 border-muted dark:border-primary-foreground">
             {/* Left Section */}
             <div
                 className="flex flex-row text-muted-foreground hover:text-foreground transition-all gap-x-2 items-center cursor-pointer"
                 role="button"
-                onClick={() => {
-                    localStorage.removeItem("student_class_id");
-                    localStorage.removeItem("teacher_class_id");
+                onClick={async () => {
+                    if(pathname.split('/')[1] === 'teacher') {
+                        await handleCloseClass();
+                    }
                     router.push("/");
                 }}
             >

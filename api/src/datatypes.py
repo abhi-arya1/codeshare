@@ -1,4 +1,14 @@
 from pydantic import BaseModel
+from enum import Enum 
+
+class WebsocketDataType(Enum): 
+    STUDENT_SUBMIT="studentSubmit"
+    TEACHER_SEND_PROBLEM="teacherSendProblem"
+    TEACHER_CLEAR_SUBMISSIONS="teacherClearSubmissions"
+    INIT="init"
+    COMMON_CODE="commonCode"
+    SUBMISSION_SWITCH="teacherSwitchSubmit"
+
 
 class ClassesDict(BaseModel):
     class_id: str

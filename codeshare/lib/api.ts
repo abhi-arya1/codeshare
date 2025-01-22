@@ -30,9 +30,19 @@ const reconnectToClass = async (class_id: string, password: string): Promise<Cre
         return null;
     }
 }
+
+
+const closeClass = async (class_id: string): Promise<null> => {
+    const res = await axios.post(makeApiRoute('/class/close'), {
+        class_id,
+    })
+
+    return null;
+}
  
 
 export {
     createClass,
-    reconnectToClass
+    reconnectToClass,
+    closeClass
 }

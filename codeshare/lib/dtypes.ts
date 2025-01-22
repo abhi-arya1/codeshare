@@ -10,7 +10,14 @@ type CreateClassReturn = {
     class_id: string;
 }
 
+type WebSocketRecieve = {
+    type: "submissionList" | "problem" | "init" | "numStudents" | "commonCode" | "submissionState" | "error";
+    class_id: string;
+    data: any;
+}
+
 export type {
     Submission,
-    CreateClassReturn
+    CreateClassReturn,
+    WebSocketRecieve
 }

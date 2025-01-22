@@ -8,16 +8,16 @@ import { Input } from "@/components/ui/input";
 import { createClass, reconnectToClass } from "@/lib/api";
 import { generateShortUUID } from "@/lib/helpers";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const Landing = () => {
     const [classCode, setClassCode] = useState<string>("");
     const [error, setError] = useState("");
     const router = useRouter();
 
-    if(localStorage.getItem("student_class_id")) {
-        return router.push("/class/" + localStorage.getItem("student_class_id"));
-    }
+    useEffect(() => {
+        localStorage.removeItem("teacher_pw");
+    }, [])
 
     const handleSubmit = () => {
         if(classCode === "" || !classCode) {
@@ -25,25 +25,18 @@ const Landing = () => {
             return;
         }
         
-        localStorage.setItem("student_class_id", classCode);
         return router.push("/class/" + classCode);
     }
 
     const [password, setPassword] = useState<string>("");
-    // const [classId, setClassId] = useState<string>(
-    //     localStorage.getItem("teacher_class_id") || 
-    //     localStorage.getItem("student_class_id") || 
-    //     "");
-
     const handleClassCreate = async () => {
         if(password === "" || !password) {
             setError("Please enter a password to continue");
             return;
         }
 
+        localStorage.setItem("teacher_pw", password);
         const classData = await createClass(password);
-        // localStorage.setItem("is_teacher", "true");
-        // localStorage.setItem("teacher_class_id", classData?.class_id || "");
         return router.push(`/teacher/${classData?.class_id}`);
     }
 
@@ -98,7 +91,7 @@ const Landing = () => {
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                             <AlertDialogTitle className="font-base">
-                                Set a Teacher Password
+                                Set a Instruction Password
                             </AlertDialogTitle>
                             <Input placeholder="Enter a teacher password" type="password" 
                                 onChange={(e) => setPassword(e.target.value.trim())}
