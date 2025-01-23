@@ -7,9 +7,6 @@ The API is hosted on AWS EC2 at [api.codeshare.opennote.me](https://api.codeshar
 
 This project is licensed under the GNU GPL v3.0 License - see the [LICENSE.md](LICENSE.md) file for details - and is built with NextJS and FastAPI.
 
-Interested in contributing? Contact _abhigyaa[at]uci.edu_.
-
-
 ## Local Setup
 
 ```bash
