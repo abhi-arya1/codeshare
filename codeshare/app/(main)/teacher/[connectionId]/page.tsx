@@ -13,7 +13,15 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Submission, WebSocketRecieve } from "@/lib/dtypes";
 import { cn } from "@/lib/utils";
-import { MessageSquareX, RefreshCw, Send, X } from "lucide-react";
+import { MessageSquareX, RefreshCw, Send, X, CircleX, CircleCheck } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import MarkdownRenderer from "@/components/markdown";
 
 export default function TeacherHome() {
   const pathname = usePathname();
@@ -26,9 +34,8 @@ export default function TeacherHome() {
   const [error, setError] = useState<string>("");
   const [code, setCode] = useState<string>("");
   const [submissionState, setSubmissionState] = useState<"enabled" | "disabled">("enabled");
-  const [connectionState, setConnectionState] = useState<"CONNECTING" | "OPEN" | "CLOSED">(
-    "CONNECTING"
-  );
+  const [connectionState, setConnectionState] = useState<"CONNECTING" | "OPEN" | "CLOSED">("CONNECTING");
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
   const sendMessage = useCallback(
     (type: string, class_id: string, data: any) => {
@@ -39,7 +46,7 @@ export default function TeacherHome() {
     []
   );
 
-  
+
   const connect = useCallback(() => {
     setConnectionState("CONNECTING");
 
@@ -218,20 +225,44 @@ export default function TeacherHome() {
 
             <div className="flex flex-row justify-end items-center gap-x-2 pt-2">
               {error && <span className="text-red-400 text-sm">{error}</span>}
+
+              <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+                <DialogTrigger asChild>
+                <Button
+                    variant="outline"
+                    className="flex flex-row gap-x-2"
+                >
+                    View Current Question <Eye className="h-4 w-4" />
+                </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Current Question</DialogTitle>
+                </DialogHeader>
+                <div className="mt-4 bg-muted p-4 rounded-lg">
+                    {description ? (
+                    <MarkdownRenderer content={description} />
+                    ) : (
+                    <span className="text-muted-foreground italic">No question set</span>
+                    )}
+                </div>
+                </DialogContent>
+            </Dialog>
+
               {submissionState === "enabled" ? (
                 <Button
                   variant="destructive"
                   className="flex flex-row gap-x-2"
                   onClick={handleSwapSubmitState}
                 >
-                  Disable Submissions <X className="h-4 w-4" />
+                  Disable Submissions <CircleX className="h-4 w-4" />
                 </Button>
               ) : (
                 <Button
                   className="flex flex-row gap-x-2"
                   onClick={handleSwapSubmitState}
                 >
-                  Enable Submissions <Send className="h-4 w-4" />
+                  Enable Submissions <CircleCheck className="h-4 w-4" />
                 </Button>
               )}
               <Button
