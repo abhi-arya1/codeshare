@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 import { useMediaQuery } from "usehooks-ts";
-import { RefreshCw, Send } from "lucide-react";
+import { RefreshCw, Send, Wifi, WifiOff } from "lucide-react";
 import MarkdownRenderer from "@/components/markdown";
 import MonacoEditor from "@/components/monaco";
 import SubmissionItem from "@/components/submission-item";
@@ -16,10 +16,20 @@ import {
 } from "@/components/ui/resizable";
 import { Submission, WebSocketRecieve } from "@/lib/dtypes";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Toast,
+  ToastClose,
+  ToastDescription,
+  ToastProvider,
+  ToastTitle,
+  ToastViewport,
+} from "@/components/ui/toast";
 
 export default function Home() {
   const pathname = usePathname();
   const classId = pathname.split("/")[2];
+  const { toast } = useToast();
 
   const [description, setDescription] = useState<string>("");
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -40,21 +50,67 @@ export default function Home() {
     []
   );
 
+  const handleReconnect = () => {
+    wsRef.current?.close();
+    connect();
+  };
+
   const connect = useCallback(() => {
     setConnectionState("CONNECTING");
+    toast({
+      title: "Connecting to class...",
+      description: "Please wait while we establish connection",
+    });
 
     const ws = new WebSocket(`${process.env.NEXT_PUBLIC_API_URL_WS!}/ws/connect`);
 
     ws.onopen = () => {
       setConnectionState("OPEN");
+      toast({
+        title: "Connected to class",
+        description: "You're now connected to the classroom",
+        className: "bg-green-50 dark:bg-green-900 border-green-200",
+      });
     };
 
     ws.onclose = () => {
       setConnectionState("CLOSED");
+      toast({
+        variant: "destructive",
+        title: "Disconnected from class",
+        description: (
+          <div className="flex flex-col gap-y-2">
+            <span>Lost connection to the classroom</span>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={handleReconnect}
+            >
+              Reconnect <RefreshCw className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        ),
+      });
     };
 
     ws.onerror = () => {
       setConnectionState("CLOSED");
+      toast({
+        variant: "destructive",
+        title: "Connection error",
+        description: (
+          <div className="flex flex-col gap-y-2">
+            <span>Failed to connect to the classroom</span>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={handleReconnect}
+            >
+              Retry Connection <RefreshCw className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        ),
+      });
     };
 
     ws.onmessage = (event) => {
@@ -79,17 +135,27 @@ export default function Home() {
             break;
           case "error":
             setError(msg.data);
+            toast({
+              variant: "destructive",
+              title: "Error",
+              description: msg.data,
+            });
             break;
           default:
             break;
         }
       } catch (err) {
         console.error("Error parsing WebSocket message:", err);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to process server message",
+        });
       }
     };
 
     wsRef.current = ws;
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     connect();
@@ -109,6 +175,11 @@ export default function Home() {
     if (submissionState === "disabled") return;
     if (code.trim() === "") {
       setError("Please enter some code to submit");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please enter some code to submit",
+      });
       return;
     }
     sendMessage("studentSubmit", classId, {
@@ -118,18 +189,12 @@ export default function Home() {
     });
   };
 
-  const handleReconnect = () => {
-    wsRef.current?.close();
-    connect();
-  };
-
   return (
     <div className="h-screen w-full relative">
       <ResizablePanelGroup
         direction={isMobile ? "vertical" : "horizontal"}
         className="max-h-screen overflow-clip h-full"
       >
-        {/* Left/editor */}
         <ResizablePanel defaultSize={50} minSize={40}>
           <div className="flex flex-col gap-y-2 p-4 h-full">
             <MonacoEditor
@@ -143,7 +208,6 @@ export default function Home() {
 
         <ResizableHandle withHandle />
 
-        {/* Right Side/Submissions */}
         <ResizablePanel defaultSize={50} minSize={25}>
           <div className="h-full p-4 flex flex-col gap-y-2">
             <div
@@ -163,7 +227,7 @@ export default function Home() {
               {error && <span className="text-red-400 text-sm">{error}</span>}
               {submissionState === "enabled" ? (
                 <Button variant="secondary" onClick={handleSubmitCode}>
-                  Submit Code <Send className="h-4 w-4" />
+                  Submit Code <Send className="ml-2 h-4 w-4" />
                 </Button>
               ) : (
                 <span className="text-muted-foreground text-sm italic mr-3">
@@ -171,21 +235,6 @@ export default function Home() {
                 </span>
               )}
             </div>
-
-            {connectionState !== "OPEN" && (
-              <div className="w-full bg-red-300 rounded-lg text-red-900 p-2 flex justify-between items-center z-10">
-                <span>
-                  {connectionState === "CONNECTING"
-                    ? "Connecting to class..."
-                    : "Disconnected from class. Please try reconnecting."}
-                </span>
-                {connectionState !== "CONNECTING" && (
-                  <Button variant="destructive" onClick={handleReconnect}>
-                    Reconnect <RefreshCw className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            )}
 
             <div className="flex flex-col gap-2 max-h-[80vh] overflow-y-scroll">
               {submissions.length === 0 && (
@@ -203,6 +252,10 @@ export default function Home() {
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
+
+      <ToastProvider>
+        <ToastViewport />
+      </ToastProvider>
     </div>
   );
 }
