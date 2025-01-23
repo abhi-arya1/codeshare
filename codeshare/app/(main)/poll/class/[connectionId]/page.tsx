@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 
 export default function Home() {
   const pathname = usePathname();
-  const classId = pathname.split("/")[2];
+  const classId = pathname.split("/")[3];
 
   const [description, setDescription] = useState<string>("");
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -43,7 +43,7 @@ export default function Home() {
   const connect = useCallback(() => {
     setConnectionState("CONNECTING");
 
-    const ws = new WebSocket(`${process.env.NEXT_PUBLIC_API_URL_WS!}/ws/connect`);
+    const ws = new WebSocket(`${process.env.NEXT_PUBLIC_API_URL_WS!}/pollshare/connect`);
 
     ws.onopen = () => {
       setConnectionState("OPEN");
@@ -72,7 +72,7 @@ export default function Home() {
             setSubmissions(msg.data.submissions);
             setDescription(msg.data.problem);
             setCode(msg.data.code);
-            setSubmissionState(msg.data.submissionState);
+            setSubmissionState(msg.data.submission_state);
             break;
           case "submissionState":
             setSubmissionState(msg.data);
@@ -132,12 +132,7 @@ export default function Home() {
         {/* Left/editor */}
         <ResizablePanel defaultSize={50} minSize={40}>
           <div className="flex flex-col gap-y-2 p-4 h-full">
-            <MonacoEditor
-              language="cpp"
-              code={code}
-              onCodeChange={(val) => setCode(val)}
-              readOnly={submissionState === "disabled"}
-            />
+            
           </div>
         </ResizablePanel>
 
@@ -155,16 +150,17 @@ export default function Home() {
               {description ? (
                 <MarkdownRenderer content={description} />
               ) : (
-                "Awaiting problem..."
+                "Awaiting poll question..."
               )}
             </div>
 
             <div className="flex flex-row justify-end items-center gap-x-2 pt-2">
               {error && <span className="text-red-400 text-sm">{error}</span>}
               {submissionState === "enabled" ? (
-                <Button variant="secondary" onClick={handleSubmitCode}>
-                  Submit Code <Send className="h-4 w-4" />
-                </Button>
+                // <Button variant="secondary" onClick={handleSubmitCode}>
+                //   Submit <Send className="h-4 w-4" />
+                // </Button>
+                null
               ) : (
                 <span className="text-muted-foreground text-sm italic mr-3">
                   Submissions are currently disabled. Please wait for your instructor.

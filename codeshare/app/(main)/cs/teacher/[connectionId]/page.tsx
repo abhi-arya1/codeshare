@@ -17,7 +17,7 @@ import { MessageSquareX, RefreshCw, Send, X } from "lucide-react";
 
 export default function TeacherHome() {
   const pathname = usePathname();
-  const classCode = pathname.split("/")[2];
+  const classCode = pathname.split("/")[3];
   const router = useRouter();
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -43,7 +43,7 @@ export default function TeacherHome() {
   const connect = useCallback(() => {
     setConnectionState("CONNECTING");
 
-    const ws = new WebSocket(`${process.env.NEXT_PUBLIC_API_URL_WS!}/ws/connect`);
+    const ws = new WebSocket(`${process.env.NEXT_PUBLIC_API_URL_WS!}/codeshare/connect`);
 
     ws.onopen = () => {
       setConnectionState("OPEN");

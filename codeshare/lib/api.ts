@@ -5,9 +5,10 @@ const makeApiRoute = (path: string) => {
     return `${process.env.NEXT_PUBLIC_API_URL}${path}`;
 }
 
-const createClass = async (password: string): Promise<CreateClassReturn | null> => {
+const createClass = async (password: string, class_type: string): Promise<CreateClassReturn | null> => {
     const res = await axios.post(makeApiRoute('/class/create'), {
-        password
+        password,
+        class_type
     })
 
     if(res.data.success) {

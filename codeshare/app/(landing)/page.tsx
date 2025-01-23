@@ -5,14 +5,14 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { createClass, reconnectToClass } from "@/lib/api";
-import { generateShortUUID } from "@/lib/helpers";
-import { GithubIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { createClass } from "@/lib/api";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
 const Landing = () => {
     const [classCode, setClassCode] = useState<string>("");
+    const [mode, setMode] = useState<"codespace" | "poll">("codespace");
     const [error, setError] = useState("");
     const router = useRouter();
 
@@ -26,7 +26,11 @@ const Landing = () => {
             return;
         }
         
-        return router.push("/class/" + classCode);
+        if (mode === "codespace") {
+            return router.push(`/cs/class/${classCode}`);
+        } else {
+            return router.push(`/poll/class/${classCode}`);
+        }
     }
 
     const [password, setPassword] = useState<string>("");
@@ -37,8 +41,12 @@ const Landing = () => {
         }
 
         localStorage.setItem("teacher_pw", password);
-        const classData = await createClass(password);
-        return router.push(`/teacher/${classData?.class_id}`);
+        const classData = await createClass(password, mode);
+        if (mode === "codespace") {
+            return router.push(`/cs/teacher/${classData?.class_id}`);
+        } else {
+            return router.push(`/poll/teacher/${classData?.class_id}`);
+        }
     }
 
     // const handleClassReconnect = async () => {
@@ -70,9 +78,15 @@ const Landing = () => {
                 </Button>
                 <ModeToggle />
             </div>
+            <Tabs defaultValue={mode} className="mb-3">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="codespace" onClick={() => setMode("codespace")}>Codespace</TabsTrigger>
+                    <TabsTrigger value="poll" onClick={() => setMode("poll")}>Poll</TabsTrigger>
+                </TabsList>
+            </Tabs>
             <Card className="py-2 px-3 flex flex-col items-center gap-y-3">
                 <CardTitle className="mt-4 mb-2 text-xl">
-                    Welcome to CodeShare
+                    { mode === "codespace" ? "Welcome to CodeShare" : "Welcome to PollShare" }
                 </CardTitle>
                 <CardContent className="flex flex-col items-center gap-y-2">
                     <div className="flex flex-row gap-x-3">
@@ -164,4 +178,13 @@ const Landing = () => {
     )
 }
  
-export default Landing;
+
+const LandingWSuspense = () => {
+    return ( 
+        <Suspense fallback={<div>Loading...</div>}> 
+            <Landing />
+        </Suspense>
+     );
+}
+ 
+export default LandingWSuspense;

@@ -16,8 +16,14 @@ type WebSocketRecieve = {
     data: any;
 }
 
+type Poll = {
+    question: string; 
+    choices: string[];
+}
+
 export type {
     Submission,
+    Poll,
     CreateClassReturn,
     WebSocketRecieve
 }

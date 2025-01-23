@@ -13,7 +13,7 @@ const Navbar = () => {
     const [copied, setCopied] = useState(false);
     const router = useRouter();
     const pathname = usePathname();
-    const classCode = pathname.split("/")[2];
+    const classCode = pathname.split("/")[3];
 
     const handleCopy = () => {
         navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_SITE_URL}/class/${classCode}`);
@@ -55,10 +55,12 @@ const Navbar = () => {
 
             {/* Right Section */}
             <div className="flex flex-row justify-end items-center gap-x-2">
-                <span className="text-muted-foreground font-semibold">Codeshare</span>
+                <span className="text-muted-foreground font-semibold">{
+                    pathname.split('/')[1] === 'cs' ? "Codeshare" : "Pollshare"
+                }</span>
                 <ModeToggle />
                 {
-                    pathname.split('/')[1] === 'teacher' ? (
+                    pathname.split('/')[2] === 'teacher' ? (
                         <Button variant="secondary" onClick={handleCopy}>
                             { copied ? <><CircleCheck /> Copied Link</> : "Get Student Link" }
                         </Button>
