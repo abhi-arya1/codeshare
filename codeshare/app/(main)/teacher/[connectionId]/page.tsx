@@ -13,7 +13,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Submission, WebSocketRecieve } from "@/lib/dtypes";
 import { cn } from "@/lib/utils";
-import { MessageSquareX, Send, X } from "lucide-react";
+import { MessageSquareX, RefreshCw, Send, X } from "lucide-react";
 
 export default function TeacherHome() {
   const pathname = usePathname();
@@ -252,7 +252,7 @@ export default function TeacherHome() {
                 </span>
                 {connectionState !== "CONNECTING" && (
                   <Button variant="destructive" onClick={handleReconnect}>
-                    Reconnect
+                    Reconnect <RefreshCw className="h-4 w-4" />
                   </Button>
                 )}
               </div>

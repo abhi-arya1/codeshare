@@ -163,7 +163,7 @@ export default function Home() {
               {error && <span className="text-red-400 text-sm">{error}</span>}
               {submissionState === "enabled" ? (
                 <Button variant="secondary" onClick={handleSubmitCode}>
-                  Submit <Send className="h-4 w-4" />
+                  Submit Code <Send className="h-4 w-4" />
                 </Button>
               ) : (
                 <span className="text-muted-foreground text-sm italic mr-3">
