@@ -13,7 +13,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Submission, WebSocketRecieve } from "@/lib/dtypes";
 import { cn } from "@/lib/utils";
-import { MessageSquareX, RefreshCw, Send, X, CircleX, CircleCheck } from "lucide-react";
+import { MessageSquareX, RefreshCw, Send, X, CircleX, CircleCheck, Eye } from "lucide-react";
 import {
   Dialog,
   DialogContent,
