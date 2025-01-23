@@ -13,7 +13,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Submission, WebSocketRecieve } from "@/lib/dtypes";
 import { cn } from "@/lib/utils";
-import { MessageSquareX, RefreshCw, Send, X, CircleX, CircleCheck, Eye } from "lucide-react";
+import { MessageSquareX, RefreshCw, Send, X, CircleX, CircleCheck, Eye, PencilOff } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -157,12 +157,10 @@ export default function TeacherHome() {
 
   return (
     <div className="h-screen w-full relative">
-      {/* Resize Layout */}
       <ResizablePanelGroup
         direction="horizontal"
         className="max-h-screen overflow-clip"
       >
-        {/* Code Editor, Buttons */}
         <ResizablePanel defaultSize={50} minSize={40}>
           <div className="flex flex-col gap-y-2 p-4">
             <MonacoEditor
@@ -176,7 +174,6 @@ export default function TeacherHome() {
 
         <ResizableHandle withHandle />
 
-        {/* Description, Submissions */}
         <ResizablePanel defaultSize={50} minSize={25}>
           <div className="h-full p-4 flex flex-col gap-y-2">
             <div
@@ -196,7 +193,6 @@ export default function TeacherHome() {
                 value={description}
                 onChange={(e) => {
                   setDescription(e.target.value);
-                  // auto-grow
                   e.target.style.height = "auto";
                   e.target.style.height = `${e.target.scrollHeight}px`;
                 }}
@@ -289,12 +285,15 @@ export default function TeacherHome() {
               </div>
             )}
 
-            {/* Submissions List */}
             <div className="flex flex-col gap-2 overflow-y-auto">
               {submissions.length === 0 && (
-                <span className="text-muted-foreground italic">
-                  No submissions yet
-                </span>
+                  <div className="h-full flex-1 flex flex-col items-center justify-center gap-y-2 min-h-[200px]">
+                        <PencilOff className="h-8 w-8 text-muted-foreground" />
+                        <span className="text-muted-foreground italic">
+                            No submissions yet
+                        </span>
+                    </div>
+
               )}
                {submissions
                 .slice()
