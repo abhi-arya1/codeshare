@@ -1,6 +1,6 @@
 # Codeshare
 
-For anyone in UCI's ICS courses (with Prof. Klefstad), you've probably had to use [GitCodings](https://gitcodings.com). Specifically during my quarter, we're barely able to connect to it, so I revamped and simplified the interface. 
+For anyone in UCI's ICS courses (with Prof. Klefstad), you've probably had to use [GitCodings](https://gitcodings.com). Specifically during my quarter, we're barely able to connect to it, so I revamped and simplified the interface (oh and we're adding more lecture tools too)
 
 **Check it out at [codeshare.opennote.me](https://codeshare.opennote.me).**
 The API is hosted on AWS EC2 at [api.codeshare.opennote.me](https://api.codeshare.opennote.me).
