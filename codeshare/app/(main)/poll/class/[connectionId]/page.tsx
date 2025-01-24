@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/resizable";
 import { cn } from "@/lib/utils";
 import MarkdownRenderer from "@/components/markdown";
+import { Pollcard } from "@/components/pollcard";
 
 type PollSubmissions = Record<string, number>;
 
@@ -180,14 +181,13 @@ export default function Home() {
                 </span>
               ) : (
                 options.map((option, idx) => (
-                  <Button
+                  <Pollcard
                     key={idx}
-                    // Disable if teacher disabled submissions, or user has already submitted
+                    content={option}
+                    idx={idx}
                     disabled={submissionState === "disabled" || hasSubmitted}
                     onClick={() => handleSubmitOption(option)}
-                  >
-                    {option}
-                  </Button>
+                  />
                 ))
               )}
             </div>

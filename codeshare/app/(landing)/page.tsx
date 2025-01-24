@@ -12,7 +12,7 @@ import { Suspense, useEffect, useState } from "react";
 
 const Landing = () => {
     const [classCode, setClassCode] = useState<string>("");
-    const [mode, setMode] = useState<"codespace" | "poll">("codespace");
+    const [mode, setMode] = useState<"codespace" | "poll" | "circuit">("codespace");
     const [error, setError] = useState("");
     const router = useRouter();
 
@@ -80,13 +80,17 @@ const Landing = () => {
             </div>
             <Tabs defaultValue={mode} className="mb-3">
                 <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="codespace" onClick={() => setMode("codespace")}>Codespace</TabsTrigger>
-                    <TabsTrigger value="poll" onClick={() => setMode("poll")}>Poll</TabsTrigger>
+                    <TabsTrigger value="codespace" onClick={() => setMode("codespace")}>Codeshare</TabsTrigger>
+                    <TabsTrigger value="poll" onClick={() => setMode("poll")}>Pollshare</TabsTrigger>
+                    {/* <TabsTrigger value="circuit" onClick={() => setMode("circuit")}>Circuitshare</TabsTrigger> */}
                 </TabsList>
             </Tabs>
             <Card className="py-2 px-3 flex flex-col items-center gap-y-3">
                 <CardTitle className="mt-4 mb-2 text-xl">
-                    { mode === "codespace" ? "Welcome to CodeShare" : "Welcome to PollShare" }
+                    {
+                        mode === "codespace" ? "Welcome to Codeshare" : 
+                        mode === "poll" ? "Welcome to Pollshare" : "Welcome to Circuitshare"
+                    }
                 </CardTitle>
                 <CardContent className="flex flex-col items-center gap-y-2">
                     <div className="flex flex-row gap-x-3">

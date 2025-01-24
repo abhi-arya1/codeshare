@@ -354,7 +354,7 @@ export default function TeacherHome() {
                 ))
               ) : (
                 <div className="bg-muted text-muted-foreground italic rounded-lg p-4">
-                  Awaiting answer choices...
+                  Add answer choices here...
                 </div>
               )}
             </div>
