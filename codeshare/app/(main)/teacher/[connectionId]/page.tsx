@@ -32,7 +32,7 @@ export default function TeacherHome() {
   const [description, setDescription] = useState<string>("");
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [error, setError] = useState<string>("");
-  const [code, setCode] = useState<string>("// anything you type here will be sent to student's code editors");
+  const [code, setCode] = useState<string>("");
   const [submissionState, setSubmissionState] = useState<"enabled" | "disabled">("enabled");
   const [connectionState, setConnectionState] = useState<"CONNECTING" | "OPEN" | "CLOSED">("CONNECTING");
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -157,10 +157,12 @@ export default function TeacherHome() {
 
   return (
     <div className="h-screen w-full relative">
+      {/* Resize Layout */}
       <ResizablePanelGroup
         direction="horizontal"
         className="max-h-screen overflow-clip"
       >
+        {/* Code Editor, Buttons */}
         <ResizablePanel defaultSize={50} minSize={40}>
           <div className="flex flex-col gap-y-2 p-4">
             <MonacoEditor
@@ -174,6 +176,7 @@ export default function TeacherHome() {
 
         <ResizableHandle withHandle />
 
+        {/* Description, Submissions */}
         <ResizablePanel defaultSize={50} minSize={25}>
           <div className="h-full p-4 flex flex-col gap-y-2">
             <div
@@ -193,6 +196,7 @@ export default function TeacherHome() {
                 value={description}
                 onChange={(e) => {
                   setDescription(e.target.value);
+                  // auto-grow
                   e.target.style.height = "auto";
                   e.target.style.height = `${e.target.scrollHeight}px`;
                 }}
@@ -285,15 +289,15 @@ export default function TeacherHome() {
               </div>
             )}
 
+            {/* Submissions List */}
             <div className="flex flex-col gap-2 overflow-y-auto">
               {submissions.length === 0 && (
                   <div className="h-full flex-1 flex flex-col items-center justify-center gap-y-2 min-h-[200px]">
-                        <PencilOff className="h-8 w-8 text-muted-foreground" />
-                        <span className="text-muted-foreground italic">
-                            No submissions yet
-                        </span>
-                    </div>
-
+                      <PencilOff className="h-8 w-8 text-muted-foreground" />
+                      <span className="text-muted-foreground italic">
+                          No submissions yet
+                      </span>
+                  </div>
               )}
                {submissions
                 .slice()
