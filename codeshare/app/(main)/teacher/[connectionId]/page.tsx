@@ -32,7 +32,7 @@ export default function TeacherHome() {
   const [description, setDescription] = useState<string>("");
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [error, setError] = useState<string>("");
-  const [code, setCode] = useState<string>("");
+  const [code, setCode] = useState<string>("// anything you type here will be sent to student's code editors");
   const [submissionState, setSubmissionState] = useState<"enabled" | "disabled">("enabled");
   const [connectionState, setConnectionState] = useState<"CONNECTING" | "OPEN" | "CLOSED">("CONNECTING");
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
