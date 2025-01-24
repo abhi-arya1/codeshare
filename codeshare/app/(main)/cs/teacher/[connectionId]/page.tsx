@@ -121,7 +121,7 @@ export default function TeacherHome() {
   const handleSendProblem = () => {
     sendMessage("teacherSendProblem", classCode, {
       description,
-      code,
+      code: code ? code : "",
       password: localStorage.getItem("teacher_pw"),
     });
   };

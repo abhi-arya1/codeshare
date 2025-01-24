@@ -2,11 +2,10 @@ import asyncio
 from fastapi import FastAPI, Depends, WebSocket, WebSocketDisconnect, WebSocketException, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from src.managers import ConnectionManager, APIManager
+from src.managers import CodeshareManager, PollshareManager
 from src.datatypes import *
 from uuid import uuid4
 import psutil
-from time import time
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from secrets import compare_digest
 from fastapi.openapi.docs import get_swagger_ui_html
@@ -25,6 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 def get_current_username(credentials: HTTPBasicCredentials = Depends(security)):
     correct_username = compare_digest(credentials.username, "admin")
     correct_password = compare_digest(credentials.password, "ics46")
@@ -42,11 +42,9 @@ async def on_startup():
     """
     Startup Event for the FastAPI Application
     """
-    app.ws_manager = ConnectionManager()
-    app.msg_queue  = asyncio.Queue()
     app.classes = dict()
+    app.websockets = set()
     app.status = "ONLINE"
-    app.start_time = time()
     app.total_messages_received = 0
     app.total_messages_sent = 0
 
@@ -65,63 +63,34 @@ async def on_shutdown():
 @app.get('/')
 async def home():
     return JSONResponse({
-        "message": "Hello, World! Welcome to the CodeShare API",
+        "message": "Hello, World! Welcome to the CodeShare API! Go to the URL below to access the CodeShare App.",
+        "url": "https://codeshare.opennote.me",
         "status": app.status
     })
 
 
 @app.get("/docs")
 async def get_documentation(username: str = Depends(get_current_username)):
-    return get_swagger_ui_html(openapi_url="/openapi.json", title="Codespace API")
+    return get_swagger_ui_html(openapi_url="/openapi.json", title="Codeshare API")
 
 
 @app.get("/openapi.json")
 async def openapi(username: str = Depends(get_current_username)):
-    return get_openapi(title = "Codespace API", version="0.1.0", routes=app.routes)
+    return get_openapi(title = "Codeshare API", version="1.0.0", routes=app.routes)
 
 
 @app.post('/class/create', response_model=ClassResponse)
 async def create_class(data: CreateClassRequest): 
-    classId = str(uuid4()).replace('-', '')[:6]
+    class_id = str(uuid4()).replace('-', '')[:6]
+
     if data.class_type == "poll":
-        app.classes[classId] = {
-            "password": data.password,
-            "websockets": set(),
-            "submissions": [],
-            "poll_question": "",
-            "options": [],
-            "submission_state": "enabled",
-            "class_type": data.class_type
-        }
+        app.classes[class_id] = PollshareManager(class_id, data.password, data.class_type)
     else: 
-        app.classes[classId] = {
-            "password": data.password,
-            "websockets": set(),
-            "submissions": [],
-            "problem": "",
-            "common_code": "",
-            "submission_state": "enabled",
-            "class_type": data.class_type
-        }
-    
-    print("Created class with ID:", classId)
-    return JSONResponse({
-        "success": True,
-        "class_id": classId
-    })
-
-
-@app.post('/class/reconnect', response_model=ClassResponse)
-async def reconnect_to_class(data: ReconnectToClassRequest):
-    if (data.password != app.classes.get(data.class_id, {"password": None}).get("password")):
-        return JSONResponse({
-            "success": False,
-            "class_id": None
-        })
+        app.classes[class_id] = CodeshareManager(class_id, data.password, data.class_type)
     
     return JSONResponse({
         "success": True,
-        "class_id": data.class_id
+        "class_id": class_id
     })
 
 
@@ -139,7 +108,6 @@ async def metrics(username: str = Depends(get_current_username)):
     """
     Endpoint to monitor API resource usage in a human-readable format.
     """
-    uptime = time() - app.start_time
     process = psutil.Process()
     memory_info = process.memory_info()
     cpu_usage = process.cpu_percent(interval=0.5)
@@ -150,7 +118,6 @@ async def metrics(username: str = Depends(get_current_username)):
         "active_classes": len(app.classes),
         "total_messages_received": f"{app.total_messages_received:,}",
         "total_messages_sent": f"{app.total_messages_sent:,}",
-        "uptime_seconds": f"{uptime:.2f} seconds",
         "process_resource_usage": {
             "memory": {
                 "resident_set_size": f"{memory_info.rss / (1024 ** 2):.2f} MB",
@@ -180,271 +147,133 @@ async def metrics(username: str = Depends(get_current_username)):
 
 
 
-
 @app.websocket("/codeshare/connect")
 async def ws_connect(ws: WebSocket):
-    await app.ws_manager.connect(ws)
-    print("Connected a new WebSocket to CodeShare")
+    await ws.accept()
+    app.websockets.add(ws)
     try: 
         while True: 
             data = await ws.receive_json()
             app.total_messages_received += 1
 
-            classdata = app.classes.get(data["class_id"], None)
-            if classdata is None: 
-                await ws.send_json({
-                    "type": "error",
-                    "data": "404: Class Code Not Found"
-                })
+            class_mgr: CodeshareManager | None = app.classes.get(data["class_id"], None)
+            if class_mgr is None: 
+                await ws.send_json(ERROR_404)
                 app.total_messages_sent += 1
                 return
             
-            elif data["type"] == CodeshareDataType.PING.value:
-                await ws.send_json({
-                    "type": "pong"
-                })
-                app.total_messages_sent += 1
+            else:
+                match data["type"]:
+                    case CodeshareDataType.PING.value:
+                        await ws.send_json({"type": "pong"})
+                        app.total_messages_sent += 1
 
-            elif data["type"] == CodeshareDataType.INIT.value:
-                app.classes[data["class_id"]]["websockets"].add(ws)
-                await ws.send_json({
-                    "type": "init",
-                    "data": {
-                        "submissions": classdata["submissions"],
-                        "problem": classdata["problem"],
-                        "code": classdata["common_code"],
-                        "submission_state": classdata["submission_state"]
-                    },
-                    "class_id": data["class_id"]
-                })
-                app.total_messages_sent += 1
+                    case CodeshareDataType.INIT.value:
+                        class_mgr.websockets.add(ws)
+                        await ws.send_json(class_mgr.get_init_packet(app))
 
-                # await publish_out_numstudents(classdata["websockets"], len(classdata["websockets"]), data["class_id"])
+                    case CodeshareDataType.STUDENT_SUBMIT.value:
+                        class_mgr.submissions.append(data["data"])
+                        await class_mgr.publish_out_submissions(app)
 
-            elif data["type"] == CodeshareDataType.STUDENT_SUBMIT.value:
-                app.classes[data["class_id"]]["submissions"].append(data["data"])
-                await publish_out_submissions(classdata["websockets"], classdata["submissions"], data["class_id"])
+                    case CodeshareDataType.TEACHER_SEND_PROBLEM.value:
+                        if not class_mgr.authenticate(data["data"]["password"]):
+                            await ws.send_json(ERROR_401)
+                            return
+                        
+                        class_mgr.problem = data["data"]["description"]
+                        class_mgr.common_code = data["data"]["code"]
+                        await class_mgr.publish_out_problem(app)
 
-            elif data["type"] == CodeshareDataType.TEACHER_SEND_PROBLEM.value:
-                password = app.classes[data["class_id"]]["password"]
-                if data["data"]["password"] != password:
-                    await ws.send_json({
-                        "type": "error",
-                        "data": "401: Unauthorized"
-                    })
-                    return
-
-                app.classes[data["class_id"]]["problem"] = data["data"]["description"]
-                app.classes[data["class_id"]]["common_code"] = data["data"]["code"]
-                await publish_out_problem(classdata["websockets"], classdata["problem"], classdata["common_code"], data["class_id"])
-
-            elif data["type"] == CodeshareDataType.TEACHER_CLEAR_SUBMISSIONS.value:
-                password = app.classes[data["class_id"]]["password"]
-                if data["data"]["password"] != password:
-                    await ws.send_json({
-                        "type": "error",
-                        "data": "401: Unauthorized"
-                    })
-                    return
+                    case CodeshareDataType.TEACHER_CLEAR_SUBMISSIONS.value:
+                        if not class_mgr.authenticate(data["data"]["password"]):
+                            await ws.send_json(ERROR_401)
+                            return
                 
-                app.classes[data["class_id"]]["submissions"] = []
-                await publish_out_submissions(classdata["websockets"], [], data["class_id"])
+                        class_mgr.submissions = []
+                        await class_mgr.publish_out_submissions(app)
 
-            elif data["type"] == CodeshareDataType.SUBMISSION_SWITCH.value:
-                password = app.classes[data["class_id"]]["password"]
-                if data["data"]["password"] != password:
-                    await ws.send_json({
-                        "type": "error",
-                        "data": "401: Unauthorized"
-                    })
-                    app.total_messages_sent += 1
-                    return
-                
-                current_state = app.classes[data["class_id"]]["submission_state"]
-                if(current_state == "enabled"):
-                    app.classes[data["class_id"]]["submission_state"] = "disabled"
-                else:
-                    app.classes[data["class_id"]]["submission_state"] = "enabled"
-                await publish_out_substate(classdata["websockets"], app.classes[data["class_id"]]["submission_state"], data["class_id"])
+                    case CodeshareDataType.SUBMISSION_SWITCH.value:
+                        if not class_mgr.authenticate(data["data"]["password"]):
+                            await ws.send_json(ERROR_401)
+                            app.total_messages_sent += 1
+                            return
+                        
+                        class_mgr.swap_submission_state()
+                        await class_mgr.publish_out_submission_state(app)
     except WebSocketDisconnect:
         print("Disconnected")
     finally: 
-        app.ws_manager.disconnect(ws)
-
+        app.websockets.remove(ws)
+        for _class in app.classes.values():
+            if ws in _class.websockets:
+                _class.websockets.remove(ws)
+                break
 
 
 
 @app.websocket("/pollshare/connect")
 async def ws_connect(ws: WebSocket):
-    await app.ws_manager.connect(ws)
+    await ws.accept()
+    app.websockets.add(ws)
     print("Connected a new WebSocket to PollShare")
     try: 
         while True: 
             data = await ws.receive_json()
             app.total_messages_received += 1
 
-            classdata = app.classes.get(data["class_id"], None)
-            if classdata is None: 
-                await ws.send_json({
-                    "type": "error",
-                    "data": "404: Class Code Not Found"
-                })
+            class_mgr: PollshareManager | None = app.classes.get(data["class_id"], None)
+            if class_mgr is None: 
+                await ws.send_json(ERROR_404)
                 app.total_messages_sent += 1
                 return
         
-            elif data["type"] == PollshareDataType.PING.value:
-                await ws.send_json({
-                    "type": "pong"
-                })
-                app.total_messages_sent += 1
+            else: 
+                match data["type"]:
+                    case PollshareDataType.PING.value:
+                        await ws.send_json({
+                            "type": "pong"
+                        })
+                        app.total_messages_sent += 1
 
-            elif data["type"] == PollshareDataType.INIT.value:
-                app.classes[data["class_id"]]["websockets"].add(ws)
-                await ws.send_json({
-                    "type": "init",
-                    "data": {
-                        "submissions": classdata["submissions"],
-                        "poll_question": classdata["poll_question"],
-                        "options": classdata["options"],
-                        "submission_state": classdata["submission_state"]
-                    },
-                    "class_id": data["class_id"]
-                })
-                app.total_messages_sent += 1
+                    case PollshareDataType.INIT.value:
+                        class_mgr.websockets.add(ws)
+                        await ws.send_json(class_mgr.get_init_packet(app))
 
-            elif data["type"] == PollshareDataType.STUDENT_SUBMIT_POLL.value:
-                app.classes[data["class_id"]]["submissions"].append(data["data"])
-                await publish_out_submissions(classdata["websockets"], classdata["submissions"], data["class_id"])
+                    case PollshareDataType.STUDENT_SUBMIT_POLL.value:
+                        class_mgr.add_submission(data["data"])
+                        await class_mgr.publish_out_submissions(app)
 
-            elif data["type"] == PollshareDataType.TEACHER_SEND_POLL.value:
-                password = app.classes[data["class_id"]]["password"]
-                if data["data"]["password"] != password:
-                    await ws.send_json({
-                        "type": "error",
-                        "data": "401: Unauthorized"
-                    })
-                    return
+                    case PollshareDataType.TEACHER_SEND_POLL.value:
+                        if not class_mgr.authenticate(data["data"]["password"]):
+                            await ws.send_json(ERROR_401)
+                            return
 
-                app.classes[data["class_id"]]["poll_question"] = data["data"]["poll_question"]
-                app.classes[data["class_id"]]["options"] = data["data"]["options"]
-                await publish_out_poll(classdata["websockets"], classdata["poll_question"], classdata["options"], data["class_id"])
+                        class_mgr.set_poll(data["data"]["poll_question"], data["data"]["options"])
+                        await class_mgr.publish_out_poll(app)
 
-            elif data["type"] == PollshareDataType.TEACHER_CLEAR_SUBMISSIONS.value:
-                password = app.classes[data["class_id"]]["password"]
-                if data["data"]["password"] != password:
-                    await ws.send_json({
-                        "type": "error",
-                        "data": "401: Unauthorized"
-                    })
-                    return
-                
-                app.classes[data["class_id"]]["submissions"] = []
-                await publish_out_submissions(classdata["websockets"], [], data["class_id"])
+                    case PollshareDataType.TEACHER_CLEAR_SUBMISSIONS.value:
+                        if not class_mgr.authenticate(data["data"]["password"]):
+                            await ws.send_json(ERROR_401)
+                            return
 
-            elif data["type"] == PollshareDataType.SUBMISSION_SWITCH.value:
-                password = app.classes[data["class_id"]]["password"]
-                if data["data"]["password"] != password:
-                    await ws.send_json({
-                        "type": "error",
-                        "data": "401: Unauthorized"
-                    })
-                    app.total_messages_sent += 1
-                    return
-                
-                current_state = app.classes[data["class_id"]]["submission_state"]
-                if(current_state == "enabled"):
-                    app.classes[data["class_id"]]["submission_state"] = "disabled"
-                else:
-                    app.classes[data["class_id"]]["submission_state"] = "enabled"
-                await publish_out_substate(classdata["websockets"], app.classes[data["class_id"]]["submission_state"], data["class_id"])
+                        class_mgr.submissions = []
+                        await class_mgr.publish_out_submissions(app)
+
+                    case PollshareDataType.SUBMISSION_SWITCH.value:
+                        if not class_mgr.authenticate(data["data"]["password"]):
+                            await ws.send_json(ERROR_401)
+                            app.total_messages_sent += 1
+                            return
+
+                        class_mgr.swap_submission_state()
+                        await class_mgr.publish_out_submission_state(app)
     except WebSocketDisconnect:
         print("Disconnected")
     finally: 
-        app.ws_manager.disconnect(ws)
+        app.websockets.remove(ws)
+        for _class in app.classes.values():
+            if ws in _class.websockets:
+                _class.websockets.remove(ws)
+                break
 
-
-
-
-async def publish_out_submissions(websockets, submissions, class_id):
-    packet = {
-        "type": "submissionList",
-        "data": submissions,
-        "class_id": class_id
-    }
-    for ws in websockets:
-        app.total_messages_sent += 1
-        try:
-            await ws.send_json(packet)
-        except RuntimeError as e:
-            print(f"WebSocket already closed: {e}")
-        except Exception as e:
-            print(f"Error sending message: {e}")
-
-
-async def publish_out_substate(websockets, state, class_id):
-    packet = {
-        "type": "submissionState",
-        "data": state,
-        "class_id": class_id
-    }
-    for ws in websockets:
-        app.total_messages_sent += 1
-        try:
-            await ws.send_json(packet)
-        except RuntimeError as e:
-            print(f"WebSocket already closed: {e}")
-        except Exception as e:
-            print(f"Error sending message: {e}")
-
-
-async def publish_out_problem(websockets, problem, code, class_id):
-    packet = {
-        "type": "problem",
-        "data": {
-            "problem": problem,
-            "code": code
-        },
-        "class_id": class_id
-    }
-    for ws in websockets:
-        app.total_messages_sent += 1
-        try:
-            await ws.send_json(packet)
-        except RuntimeError as e:
-            print(f"WebSocket already closed: {e}")
-        except Exception as e:
-            print(f"Error sending message: {e}")
-
-async def publish_out_numstudents(websockets, num_students, class_id):
-    packet = {
-        "type": "numStudents",
-        "data": num_students - 1,
-        "class_id": class_id
-    }
-    for ws in websockets:
-        app.total_messages_sent += 1
-        try:
-            await ws.send_json(packet)
-        except RuntimeError as e:
-            print(f"WebSocket already closed: {e}")
-        except Exception as e:
-            print(f"Error sending message: {e}")
-
-
-async def publish_out_poll(websockets, poll_question, options, class_id):
-    packet = {
-        "type": "poll",
-        "data": {
-            "poll_question": poll_question,
-            "options": options
-        },
-        "class_id": class_id
-    }
-    for ws in websockets:
-        app.total_messages_sent += 1
-        try:
-            await ws.send_json(packet)
-        except RuntimeError as e:
-            print(f"WebSocket already closed: {e}")
-        except Exception as e:
-            print(f"Error sending message: {e}")

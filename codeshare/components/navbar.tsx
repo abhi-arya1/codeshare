@@ -14,9 +14,10 @@ const Navbar = () => {
     const router = useRouter();
     const pathname = usePathname();
     const classCode = pathname.split("/")[3];
+    const classType = pathname.split("/")[1];
 
     const handleCopy = () => {
-        navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_SITE_URL}/class/${classCode}`);
+        navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_SITE_URL}/${classType}/class/${classCode}`);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
@@ -34,7 +35,7 @@ const Navbar = () => {
                 className="flex flex-row text-muted-foreground hover:text-foreground transition-all gap-x-2 items-center cursor-pointer"
                 role="button"
                 onClick={async () => {
-                    if(pathname.split('/')[1] === 'teacher') {
+                    if(pathname.split('/')[2] === 'teacher') {
                         await handleCloseClass();
                     }
                     router.push("/");
@@ -42,7 +43,7 @@ const Navbar = () => {
             >
                 <ArrowLeft className="h-4 w-4" />
                 {
-                    pathname.split('/')[1] === 'teacher' ? (
+                    pathname.split('/')[2] === 'teacher' ? (
                         <span>Close Class</span>
                     ) : (<span>Leave Class</span>)
                 }

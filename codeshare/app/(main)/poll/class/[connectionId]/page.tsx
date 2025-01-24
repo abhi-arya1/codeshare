@@ -2,86 +2,94 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { usePathname } from "next/navigation";
-import { v4 as uuidv4 } from "uuid";
 import { useMediaQuery } from "usehooks-ts";
-import { RefreshCw, Send } from "lucide-react";
-import MarkdownRenderer from "@/components/markdown";
-import MonacoEditor from "@/components/monaco";
-import SubmissionItem from "@/components/submission-item";
+import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { Submission, WebSocketRecieve } from "@/lib/dtypes";
 import { cn } from "@/lib/utils";
+import MarkdownRenderer from "@/components/markdown";
+
+type PollSubmissions = Record<string, number>;
 
 export default function Home() {
   const pathname = usePathname();
-  const classId = pathname.split("/")[3];
+  const classId = pathname.split("/")[3] || "";
 
-  const [description, setDescription] = useState<string>("");
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [pollQuestion, setPollQuestion] = useState<string>("");
+  const [options, setOptions] = useState<string[]>([]);
+  const [submissions, setSubmissions] = useState<PollSubmissions>({});
   const [submissionState, setSubmissionState] = useState<"enabled" | "disabled">("enabled");
-  const [code, setCode] = useState<string>("");
+
   const [error, setError] = useState<string>("");
-  const [connectionState, setConnectionState] = useState<"CONNECTING" | "OPEN" | "CLOSED">("CONNECTING");
+  const [hasSubmitted, setHasSubmitted] = useState<boolean>(false);
+  const [connectionState, setConnectionState] = useState<"CONNECTING" | "OPEN" | "CLOSED">(
+    "CONNECTING"
+  );
 
   const isMobile = useMediaQuery("(max-width: 768px)");
   const wsRef = useRef<WebSocket | null>(null);
 
-  const sendMessage = useCallback(
-    (type: string, class_id: string, data: any) => {
-      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
-      const message = { type, class_id, data };
-      wsRef.current.send(JSON.stringify(message));
-    },
-    []
-  );
+  const sendMessage = useCallback((type: string, class_id: string, data: any) => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+    const message = { type, class_id, data };
+    wsRef.current.send(JSON.stringify(message));
+  }, []);
 
   const connect = useCallback(() => {
     setConnectionState("CONNECTING");
-
     const ws = new WebSocket(`${process.env.NEXT_PUBLIC_API_URL_WS!}/pollshare/connect`);
 
     ws.onopen = () => {
       setConnectionState("OPEN");
     };
-
     ws.onclose = () => {
       setConnectionState("CLOSED");
     };
-
     ws.onerror = () => {
       setConnectionState("CLOSED");
     };
 
     ws.onmessage = (event) => {
       try {
-        const msg: WebSocketRecieve = JSON.parse(event.data);
+        const msg = JSON.parse(event.data);
         switch (msg.type) {
-          case "submissionList":
-            setSubmissions(msg.data);
+          case "init": {
+            const data = msg.data;
+            setPollQuestion(data.poll_question || "");
+            setOptions(data.options || []);
+            setSubmissions(data.submissions || {});
+            setSubmissionState(data.submission_state || "enabled");
             break;
-          case "problem":
-            setDescription(msg.data.problem);
-            setCode(msg.data.code);
+          }
+          case "poll": {
+            setHasSubmitted(false);
+            const data = msg.data;
+            setPollQuestion(data.poll_question || "");
+            setOptions(data.options || []);
+            setSubmissions(data.submissions || {});
             break;
-          case "init":
-            setSubmissions(msg.data.submissions);
-            setDescription(msg.data.problem);
-            setCode(msg.data.code);
-            setSubmissionState(msg.data.submission_state);
+          }
+          case "submissionList": {
+            setSubmissions(msg.data || {});
             break;
-          case "submissionState":
+          }
+          case "submissionState": {
             setSubmissionState(msg.data);
             break;
+          }
           case "error":
-            setError(msg.data);
+            setError(msg.data || "Unknown error from server.");
             break;
+
+          case "pong":
+            break;
+
           default:
-            break;
+            console.error("Unknown message type:", msg.type);
         }
       } catch (err) {
         console.error("Error parsing WebSocket message:", err);
@@ -93,7 +101,6 @@ export default function Home() {
 
   useEffect(() => {
     connect();
-
     return () => {
       wsRef.current?.close();
     };
@@ -105,17 +112,13 @@ export default function Home() {
     }
   }, [connectionState, classId, sendMessage]);
 
-  const handleSubmitCode = () => {
-    if (submissionState === "disabled") return;
-    if (code.trim() === "") {
-      setError("Please enter some code to submit");
+  const handleSubmitOption = (option: string) => {
+    if (submissionState === "disabled") {
+      setError("Submissions are currently disabled.");
       return;
     }
-    sendMessage("studentSubmit", classId, {
-      code,
-      submittedAt: new Date().toISOString(),
-      id: uuidv4(),
-    });
+    setHasSubmitted(true);
+    sendMessage("studentSubmitPoll", classId, option);
   };
 
   const handleReconnect = () => {
@@ -129,45 +132,70 @@ export default function Home() {
         direction={isMobile ? "vertical" : "horizontal"}
         className="max-h-screen overflow-clip h-full"
       >
-        {/* Left/editor */}
+        {/* Left Panel / Results */}
         <ResizablePanel defaultSize={50} minSize={40}>
           <div className="flex flex-col gap-y-2 p-4 h-full">
-            
+            <h2 className="text-xl font-bold mb-2">Current Poll Submissions</h2>
+            {Object.keys(submissions).length === 0 ? (
+              <span className="text-muted-foreground italic">No votes yet</span>
+            ) : (
+              Object.entries(submissions).map(([opt, count]) => (
+                <div
+                  key={opt}
+                  className="bg-muted p-2 rounded-lg flex justify-between items-center my-1"
+                >
+                  <span>{opt}</span>
+                  <span className="font-bold">{count}</span>
+                </div>
+              ))
+            )}
           </div>
         </ResizablePanel>
 
         <ResizableHandle withHandle />
 
-        {/* Right Side/Submissions */}
+        {/* Right Panel: Poll question, possible choices, and a Submit button */}
         <ResizablePanel defaultSize={50} minSize={25}>
           <div className="h-full p-4 flex flex-col gap-y-2">
+
+            {/* Poll question */}
             <div
               className={cn(
                 "bg-muted rounded-lg p-4 break-words whitespace-break-spaces",
-                !description && "text-muted-foreground italic"
+                !pollQuestion && "text-muted-foreground italic"
               )}
             >
-              {description ? (
-                <MarkdownRenderer content={description} />
+              {pollQuestion ? (
+                <MarkdownRenderer content={pollQuestion} />
               ) : (
                 "Awaiting poll question..."
               )}
             </div>
 
-            <div className="flex flex-row justify-end items-center gap-x-2 pt-2">
-              {error && <span className="text-red-400 text-sm">{error}</span>}
-              {submissionState === "enabled" ? (
-                // <Button variant="secondary" onClick={handleSubmitCode}>
-                //   Submit <Send className="h-4 w-4" />
-                // </Button>
-                null
-              ) : (
-                <span className="text-muted-foreground text-sm italic mr-3">
-                  Submissions are currently disabled. Please wait for your instructor.
+            {/* If poll is present, show each option as a button or card */}
+            <div className="flex flex-col gap-2 mt-2">
+              {options.length === 0 ? (
+                <span className="text-muted-foreground italic">
+                  No answer choices yet
                 </span>
+              ) : (
+                options.map((option, idx) => (
+                  <Button
+                    key={idx}
+                    // Disable if teacher disabled submissions, or user has already submitted
+                    disabled={submissionState === "disabled" || hasSubmitted}
+                    onClick={() => handleSubmitOption(option)}
+                  >
+                    {option}
+                  </Button>
+                ))
               )}
             </div>
 
+            {/* Display error if any */}
+            {error && <span className="text-red-400 text-sm">{error}</span>}
+
+            {/* Connection bar if not open */}
             {connectionState !== "OPEN" && (
               <div className="w-full bg-red-300 rounded-lg text-red-900 p-2 flex justify-between items-center z-10">
                 <span>
@@ -182,20 +210,6 @@ export default function Home() {
                 )}
               </div>
             )}
-
-            <div className="flex flex-col gap-2 max-h-[80vh] overflow-y-scroll">
-              {submissions.length === 0 && (
-                <span className="text-muted-foreground italic">
-                  No submissions yet
-                </span>
-              )}
-              {submissions
-                .slice()
-                .reverse()
-                .map((sub, idx) => (
-                  <SubmissionItem sub={sub} key={idx} language="cpp" />
-                ))}
-            </div>
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>

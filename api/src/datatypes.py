@@ -2,6 +2,16 @@ from pydantic import BaseModel
 from enum import Enum 
 from typing import Literal
 
+CodeLanguage = Literal["cpp", "python", "javascript"]
+ClassType = Literal['poll', 'codeshare']
+
+ERROR_404 = {
+    "type": "error",
+    "data": "404: Class Code Not Found"
+}
+
+ERROR_401 = {"type": "error", "data": "401: Unauthorized"}
+
 class CodeshareDataType(Enum): 
     STUDENT_SUBMIT="studentSubmit"
     TEACHER_SEND_PROBLEM="teacherSendProblem"
