@@ -61,6 +61,11 @@ const Landing = () => {
     return (
         <div className="h-screen w-full flex flex-col items-center justify-center">
             <div className="absolute top-3 right-4 flex items-center flex-row gap-x-2">
+                <Button className="dark:bg-[#1a1a1a] dark:text-white" variant="outline"
+                    onClick={() => window.open("https://sandy-fuchsia-0e0.notion.site/1852e201b8e48034aabae0f23b5f3dc9?pvs=105", "_blank")}
+                >
+                    Request Feature
+                </Button>
                 <Button className="dark:bg-[#1a1a1a] dark:text-white" variant="outline" size="icon"
                     onClick={() => window.open("https://github.com/abhi-arya1/codeshare", "_blank")}
                 >
