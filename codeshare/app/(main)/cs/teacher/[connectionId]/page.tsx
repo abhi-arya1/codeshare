@@ -177,7 +177,7 @@ export default function TeacherHome() {
         <ResizableHandle withHandle />
 
         {/* Description, Submissions */}
-        <ResizablePanel defaultSize={50} minSize={25}>
+        <ResizablePanel defaultSize={50} minSize={35}>
           <div className="h-full p-4 flex flex-col gap-y-2">
             <div
               className={cn(
