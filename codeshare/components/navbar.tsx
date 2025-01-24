@@ -2,7 +2,7 @@
 
 
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, CircleCheck } from "lucide-react";
+import { ArrowLeft, CircleCheck, Copy } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { ModeToggle } from "./mode-toggle";
 import { useState } from "react";
@@ -11,6 +11,7 @@ import { closeClass } from "@/lib/api";
 
 const Navbar = () => {
     const [copied, setCopied] = useState(false);
+    const [codeCopied, setCodeCopied] = useState(false);
     const router = useRouter();
     const pathname = usePathname();
     const classCode = pathname.split("/")[3];
@@ -20,6 +21,12 @@ const Navbar = () => {
         navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_SITE_URL}/${classType}/class/${classCode}`);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleCopyCode = () => {
+        navigator.clipboard.writeText(classCode);
+        setCodeCopied(true);
+        setTimeout(() => setCodeCopied(false), 2000);
     };
 
     const handleCloseClass = async () => {
@@ -50,9 +57,19 @@ const Navbar = () => {
             </div>
 
             {/* Center Section */}
-            <span className="flex flex-row justify-center font-semibold gap-x-2 items-center">
-                Class Code: {classCode}
-            </span>
+            <div className="flex flex-row justify-center items-center">
+                <div className="flex items-center gap-x-2 bg-muted/30 px-3 py-1 rounded-md">
+                    <span className="font-semibold">Class Code: {classCode}</span>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={handleCopyCode}
+                    >
+                        {codeCopied ? <CircleCheck className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                </div>
+            </div>
 
             {/* Right Section */}
             <div className="flex flex-row justify-end items-center gap-x-2">
